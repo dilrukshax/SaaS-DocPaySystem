@@ -1,0 +1,262 @@
+version: '3.8'
+
+services:
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: YourStrong@Password123
+      ACCEPT_EULA: Y
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - saas-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - saas-network
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - saas-network
+
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=UserServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
+      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
+      JWT_ISSUER: "SaaS-DocPaySystem"
+      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
+      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
+      SERVICEBUS_USER_TOPIC: "user-events"
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "5001:80"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    networks:
+      - saas-network
+    restart: unless-stopped
+
+  # Document Service
+  document-service:
+    build:
+      context: ./document-service
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=DocumentServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
+      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
+      JWT_ISSUER: "SaaS-DocPaySystem"
+      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
+      AZURE_STORAGE_CONNECTION_STRING: "${AZURE_STORAGE_CONNECTION_STRING}"
+      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
+      AZURE_FORM_RECOGNIZER_ENDPOINT: "${AZURE_FORM_RECOGNIZER_ENDPOINT}"
+      AZURE_FORM_RECOGNIZER_API_KEY: "${AZURE_FORM_RECOGNIZER_API_KEY}"
+      SERVICEBUS_DOCUMENT_TOPIC: "document-events"
+      AZURE_STORAGE_CONTAINER_NAME: "documents"
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "5002:80"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+      - user-service
+    networks:
+      - saas-network
+    restart: unless-stopped
+
+  # Invoice Service
+  invoice-service:
+    build:
+      context: ./invoice-service
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=InvoiceServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
+      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
+      JWT_ISSUER: "SaaS-DocPaySystem"
+      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
+      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
+      SERVICEBUS_INVOICE_TOPIC: "invoice-events"
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "5003:80"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+      - user-service
+    networks:
+      - saas-network
+    restart: unless-stopped
+
+  # Payment Service
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=PaymentServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
+      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
+      JWT_ISSUER: "SaaS-DocPaySystem"
+      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
+      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
+      STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY}"
+      STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET}"
+      SERVICEBUS_PAYMENT_TOPIC: "payment-events"
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "5004:80"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+      - user-service
+    networks:
+      - saas-network
+    restart: unless-stopped
+
+  # Workflow Service
+  workflow-service:
+    build:
+      context: ./workflow-service
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=WorkflowServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
+      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
+      JWT_ISSUER: "SaaS-DocPaySystem"
+      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
+      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
+      SERVICEBUS_WORKFLOW_TOPIC: "workflow-events"
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "5005:80"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+      - user-service
+    networks:
+      - saas-network
+    restart: unless-stopped
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=NotificationServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
+      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
+      JWT_ISSUER: "SaaS-DocPaySystem"
+      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
+      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
+      SENDGRID_API_KEY: "${SENDGRID_API_KEY}"
+      SENDGRID_FROM_EMAIL: "${SENDGRID_FROM_EMAIL}"
+      SENDGRID_FROM_NAME: "${SENDGRID_FROM_NAME}"
+      SERVICEBUS_NOTIFICATION_TOPIC: "notification-events"
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "5006:80"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+      - user-service
+    networks:
+      - saas-network
+    restart: unless-stopped
+
+  # Reporting Service
+  reporting-service:
+    build:
+      context: ./reporting-service
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=ReportingServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
+      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
+      JWT_ISSUER: "SaaS-DocPaySystem"
+      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
+      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "5007:80"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+      - user-service
+    networks:
+      - saas-network
+    restart: unless-stopped
+
+  # AI Service
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=AIServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
+      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
+      JWT_ISSUER: "SaaS-DocPaySystem"
+      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
+      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
+      AZURE_OPENAI_ENDPOINT: "${AZURE_OPENAI_ENDPOINT}"
+      AZURE_OPENAI_API_KEY: "${AZURE_OPENAI_API_KEY}"
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "5008:80"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+      - user-service
+    networks:
+      - saas-network
+    restart: unless-stopped
+
+  # NGINX API Gateway
+  api-gateway:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - user-service
+      - document-service
+      - invoice-service
+      - payment-service
+      - workflow-service
+      - notification-service
+      - reporting-service
+      - ai-service
+    networks:
+      - saas-network
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  saas-network:
+    driver: bridge
