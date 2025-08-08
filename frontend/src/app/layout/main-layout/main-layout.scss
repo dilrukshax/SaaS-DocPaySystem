@@ -1,0 +1,175 @@
+.sidenav-container {
+  height: 100vh;
+}
+
+.sidenav {
+  width: 280px;
+  border-right: 1px solid #e0e0e0;
+  background-color: #fafafa;
+}
+
+.sidenav-header {
+  padding: 20px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #fff;
+  
+  .logo {
+    display: flex;
+    align-items: center;
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    
+    mat-icon {
+      margin-right: 12px;
+      color: #1976d2;
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+    }
+  }
+}
+
+.mat-mdc-nav-list {
+  padding-top: 8px;
+  
+  .mat-mdc-list-item {
+    height: 48px;
+    margin: 4px 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: rgba(25, 118, 210, 0.08);
+    }
+    
+    &.active-link {
+      background-color: rgba(25, 118, 210, 0.12);
+      color: #1976d2;
+      font-weight: 500;
+      
+      mat-icon {
+        color: #1976d2;
+      }
+    }
+    
+    &.hidden {
+      display: none;
+    }
+    
+    mat-icon {
+      margin-right: 16px;
+      color: #666;
+      width: 24px;
+      height: 24px;
+      font-size: 24px;
+    }
+    
+    .nav-label {
+      font-size: 14px;
+      line-height: 1.2;
+    }
+  }
+}
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+.user-menu {
+  .user-avatar {
+    .avatar-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #ff9800;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+  }
+}
+
+.user-menu-header {
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  
+  .user-info {
+    .user-name {
+      font-weight: 600;
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    
+    .user-email {
+      font-size: 14px;
+      color: #666;
+    }
+  }
+}
+
+.main-content {
+  min-height: calc(100vh - 64px);
+  background-color: #f5f5f5;
+  overflow-x: hidden;
+}
+
+// Mobile responsive adjustments
+@media (max-width: 768px) {
+  .sidenav {
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  .main-content {
+    min-height: calc(100vh - 56px);
+  }
+}
+
+// Dark theme support (optional)
+@media (prefers-color-scheme: dark) {
+  .sidenav {
+    background-color: #303030;
+    border-right-color: #424242;
+    
+    .sidenav-header {
+      background-color: #424242;
+      border-bottom-color: #616161;
+      
+      .logo {
+        color: #fff;
+      }
+    }
+  }
+  
+  .mat-mdc-nav-list .mat-mdc-list-item {
+    color: #fff;
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+    
+    &.active-link {
+      background-color: rgba(25, 118, 210, 0.2);
+    }
+    
+    mat-icon {
+      color: #ccc;
+    }
+  }
+  
+  .main-content {
+    background-color: #121212;
+  }
+}

@@ -1,0 +1,269 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Dashboard</h1>
+    <div class="user-welcome" *ngIf="currentUser$ | async as user">
+      <h2>Welcome back, {{user.firstName}}!</h2>
+      <div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Dashboard</h1>
+    <p>Welcome to your SaaS Document & Payment Management System</p>
+  </div>
+
+  <div class="stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>description</mat-icon>
+          Documents
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-number">1,247</div>
+        <div class="stat-label">Total Documents</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>receipt</mat-icon>
+          Invoices
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-number">892</div>
+        <div class="stat-label">Active Invoices</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>payment</mat-icon>
+          Payments
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-number">$47,823</div>
+        <div class="stat-label">Total Revenue</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>timeline</mat-icon>
+          Workflows
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-number">23</div>
+        <div class="stat-label">Active Workflows</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="dashboard-content">
+    <div class="left-content">
+      <mat-card class="activity-card">
+        <mat-card-header>
+          <mat-card-title>Recent Activity</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="activity-list">
+            <div class="activity-item">
+              <mat-icon color="primary">upload</mat-icon>
+              <div class="activity-details">
+                <div class="activity-title">Document uploaded</div>
+                <div class="activity-time">2 minutes ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <mat-icon color="accent">receipt</mat-icon>
+              <div class="activity-details">
+                <div class="activity-title">Invoice processed</div>
+                <div class="activity-time">15 minutes ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <mat-icon color="warn">payment</mat-icon>
+              <div class="activity-details">
+                <div class="activity-title">Payment received</div>
+                <div class="activity-time">1 hour ago</div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="right-content">
+      <mat-card class="quick-actions-card">
+        <mat-card-header>
+          <mat-card-title>Quick Actions</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="quick-actions">
+            <button mat-raised-button color="primary" routerLink="/documents">
+              <mat-icon>upload</mat-icon>
+              Upload Document
+            </button>
+            <button mat-raised-button color="accent" routerLink="/invoices">
+              <mat-icon>add</mat-icon>
+              Create Invoice
+            </button>
+            <button mat-raised-button routerLink="/workflows">
+              <mat-icon>timeline</mat-icon>
+              View Workflows
+            </button>
+            <button mat-raised-button routerLink="/analytics">
+              <mat-icon>analytics</mat-icon>
+              View Analytics
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>
+    </div>
+    <button mat-icon-button (click)="refreshDashboard()" class="refresh-btn">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-header">
+          <mat-icon color="primary">description</mat-icon>
+          <span class="stat-label">Documents</span>
+        </div>
+        <div class="stat-value">{{dashboardStats.totalDocuments}}</div>
+        <div class="stat-action">
+          <a routerLink="/documents" mat-button color="primary">View All</a>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-header">
+          <mat-icon color="warn">pending_actions</mat-icon>
+          <span class="stat-label">Pending Approvals</span>
+        </div>
+        <div class="stat-value">{{dashboardStats.pendingApprovals}}</div>
+        <div class="stat-action">
+          <a routerLink="/workflows" mat-button color="warn">Review</a>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-header">
+          <mat-icon color="accent">receipt</mat-icon>
+          <span class="stat-label">Invoices</span>
+        </div>
+        <div class="stat-value">{{dashboardStats.totalInvoices}}</div>
+        <div class="stat-action">
+          <a routerLink="/invoices" mat-button color="accent">Manage</a>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-header">
+          <mat-icon color="primary">payment</mat-icon>
+          <span class="stat-label">Recent Payments</span>
+        </div>
+        <div class="stat-value">{{dashboardStats.recentPayments}}</div>
+        <div class="stat-action">
+          <a routerLink="/payments" mat-button color="primary">View</a>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="recent-activity-section">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Recent Activity</mat-card-title>
+        <mat-card-subtitle>Latest updates and actions</mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div *ngIf="loading" class="loading-section">
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          <p>Loading recent activities...</p>
+        </div>
+
+        <div *ngIf="!loading && recentActivities.length === 0" class="no-activities">
+          <mat-icon>inbox</mat-icon>
+          <p>No recent activities</p>
+        </div>
+
+        <div *ngIf="!loading && recentActivities.length > 0" class="activities-list">
+          <div *ngFor="let activity of recentActivities" class="activity-item">
+            <div class="activity-icon">
+              <mat-icon [color]="getActivityColor(activity.status)">
+                {{getActivityIcon(activity.type)}}
+              </mat-icon>
+            </div>
+            <div class="activity-content">
+              <h4>{{activity.title}}</h4>
+              <p>{{activity.description}}</p>
+              <span class="activity-time">{{activity.timestamp | date:'short'}}</span>
+            </div>
+            <div class="activity-status">
+              <span class="status-badge" [ngClass]="'status-' + activity.status">
+                {{activity.status}}
+              </span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <a routerLink="/notifications" mat-button>View All Activities</a>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions-section">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Quick Actions</mat-card-title>
+        <mat-card-subtitle>Common tasks and operations</mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="quick-actions-grid">
+          <button mat-raised-button color="primary" routerLink="/documents/upload">
+            <mat-icon>cloud_upload</mat-icon>
+            Upload Document
+          </button>
+          
+          <button mat-raised-button color="accent" routerLink="/invoices/create">
+            <mat-icon>receipt_long</mat-icon>
+            Create Invoice
+          </button>
+          
+          <button mat-raised-button color="warn" routerLink="/workflows/tasks">
+            <mat-icon>task</mat-icon>
+            View Tasks
+          </button>
+          
+          <button mat-raised-button routerLink="/analytics">
+            <mat-icon>analytics</mat-icon>
+            View Reports
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

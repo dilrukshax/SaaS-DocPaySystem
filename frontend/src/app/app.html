@@ -1,0 +1,7 @@
+<div *ngIf="showLayout; else authContent">
+  <app-main-layout></app-main-layout>
+</div>
+
+<ng-template #authContent>
+  <router-outlet></router-outlet>
+</ng-template>

@@ -1,0 +1,346 @@
+.register-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.register-card {
+  width: 100%;
+  max-width: 600px;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  
+  mat-card-header {
+    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+    color: white;
+    padding: 32px;
+    text-align: center;
+    
+    .register-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 28px;
+      font-weight: 600;
+      margin: 0;
+      
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+      }
+    }
+    
+    mat-card-subtitle {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 16px;
+      margin-top: 8px;
+    }
+  }
+  
+  mat-card-content {
+    padding: 40px;
+  }
+}
+
+.register-form {
+  .form-section {
+    margin-bottom: 32px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin: 0 0 20px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      &:before {
+        content: '';
+        width: 4px;
+        height: 20px;
+        background: linear-gradient(135deg, #1976d2, #1565c0);
+        border-radius: 2px;
+      }
+    }
+  }
+  
+  .form-row {
+    display: flex;
+    gap: 16px;
+    
+    @media (max-width: 600px) {
+      flex-direction: column;
+      gap: 0;
+    }
+  }
+  
+  .full-width {
+    width: 100%;
+  }
+  
+  .half-width {
+    flex: 1;
+    
+    @media (max-width: 600px) {
+      width: 100%;
+    }
+  }
+  
+  mat-form-field {
+    margin-bottom: 16px;
+    
+    &.mat-mdc-form-field {
+      .mat-mdc-text-field-wrapper {
+        border-radius: 8px;
+      }
+      
+      .mat-mdc-form-field-focus-overlay {
+        border-radius: 8px;
+      }
+      
+      &.mat-focused {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: #1976d2 !important;
+          border-width: 2px !important;
+        }
+      }
+    }
+    
+    mat-icon {
+      color: #666;
+      
+      &.mat-icon-button {
+        color: #666;
+        
+        &:hover {
+          color: #1976d2;
+        }
+      }
+    }
+    
+    mat-error {
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    
+    mat-hint {
+      font-size: 12px;
+      color: #666;
+    }
+  }
+}
+
+.form-actions {
+  margin-top: 32px;
+  text-align: center;
+  
+  .register-button {
+    min-width: 200px;
+    height: 48px;
+    border-radius: 24px;
+    font-size: 16px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+    position: relative;
+    overflow: hidden;
+    
+    &:hover:not([disabled]) {
+      background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(25, 118, 210, 0.3);
+    }
+    
+    &:disabled {
+      background: #ccc;
+      color: #999;
+    }
+    
+    .button-spinner {
+      margin-right: 8px;
+    }
+    
+    mat-icon {
+      margin-right: 8px;
+    }
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    &:hover::before {
+      left: 100%;
+    }
+  }
+}
+
+.login-link {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+  
+  p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+  }
+  
+  .link {
+    color: #1976d2;
+    text-decoration: none;
+    font-weight: 600;
+    
+    &:hover {
+      text-decoration: underline;
+      color: #1565c0;
+    }
+  }
+}
+
+// Loading state
+.mat-mdc-progress-spinner {
+  --mdc-circular-progress-active-indicator-color: white;
+}
+
+// Success and error snackbar styles
+:host ::ng-deep {
+  .success-snackbar {
+    --mdc-snackbar-container-color: #4caf50;
+    --mdc-snackbar-supporting-text-color: white;
+  }
+  
+  .error-snackbar {
+    --mdc-snackbar-container-color: #f44336;
+    --mdc-snackbar-supporting-text-color: white;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .register-container {
+    padding: 16px;
+  }
+  
+  .register-card {
+    max-width: 100%;
+    
+    mat-card-header {
+      padding: 24px 20px;
+      
+      .register-title {
+        font-size: 24px;
+        
+        mat-icon {
+          font-size: 28px;
+          width: 28px;
+          height: 28px;
+        }
+      }
+    }
+    
+    mat-card-content {
+      padding: 24px 20px;
+    }
+  }
+  
+  .register-form {
+    .form-section {
+      margin-bottom: 24px;
+      
+      .section-title {
+        font-size: 16px;
+      }
+    }
+  }
+  
+  .form-actions {
+    .register-button {
+      width: 100%;
+      min-width: auto;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .register-card {
+    mat-card-header {
+      padding: 20px 16px;
+      
+      .register-title {
+        font-size: 20px;
+        
+        mat-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+        }
+      }
+      
+      mat-card-subtitle {
+        font-size: 14px;
+      }
+    }
+    
+    mat-card-content {
+      padding: 20px 16px;
+    }
+  }
+}
+
+// Animation for form sections
+.form-section {
+  animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Custom scrollbar for mobile
+@media (max-width: 768px) {
+  .register-container {
+    overflow-y: auto;
+    
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+    }
+  }
+}

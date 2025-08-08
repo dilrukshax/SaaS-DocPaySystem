@@ -177,6 +177,17 @@ public class AuthController : ControllerBase
 
 // Request DTOs
 public record LoginRequest(string Email, string Password, string? DeviceInfo);
+public record RegisterRequest(
+    string Email,
+    string Password,
+    string FirstName,
+    string LastName,
+    string TenantId,
+    string? Department,
+    string? JobTitle,
+    string? PhoneNumber,
+    string? TimeZone,
+    string? Language);
 public record RefreshTokenRequest(string RefreshToken);
 public record LogoutRequest(string RefreshToken);
 public record ValidateTokenRequest(string Token);

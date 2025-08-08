@@ -1,0 +1,191 @@
+<div class="register-container">
+  <mat-card class="register-card">
+    <mat-card-header>
+      <mat-card-title class="register-title">
+        <mat-icon>person_add</mat-icon>
+        Create Your Account
+      </mat-card-title>
+      <mat-card-subtitle>
+        Join our document and payment management platform
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+        
+        <!-- Personal Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">Personal Information</h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>First Name</mat-label>
+              <input matInput 
+                     formControlName="firstName" 
+                     placeholder="Enter your first name"
+                     autocomplete="given-name">
+              <mat-icon matSuffix>person</mat-icon>
+              <mat-error>{{ getErrorMessage('firstName') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Last Name</mat-label>
+              <input matInput 
+                     formControlName="lastName" 
+                     placeholder="Enter your last name"
+                     autocomplete="family-name">
+              <mat-icon matSuffix>person</mat-icon>
+              <mat-error>{{ getErrorMessage('lastName') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Email Address</mat-label>
+            <input matInput 
+                   type="email" 
+                   formControlName="email" 
+                   placeholder="Enter your email address"
+                   autocomplete="email">
+            <mat-icon matSuffix>email</mat-icon>
+            <mat-error>{{ getErrorMessage('email') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Phone Number (Optional)</mat-label>
+            <input matInput 
+                   formControlName="phoneNumber" 
+                   placeholder="+1 (555) 123-4567"
+                   autocomplete="tel">
+            <mat-icon matSuffix>phone</mat-icon>
+            <mat-error>{{ getErrorMessage('phoneNumber') }}</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Security Section -->
+        <div class="form-section">
+          <h3 class="section-title">Security</h3>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Password</mat-label>
+            <input matInput 
+                   [type]="hidePassword ? 'password' : 'text'"
+                   formControlName="password" 
+                   placeholder="Enter a secure password"
+                   autocomplete="new-password">
+            <button mat-icon-button 
+                    matSuffix 
+                    type="button"
+                    (click)="hidePassword = !hidePassword">
+              <mat-icon>{{ hidePassword ? 'visibility' : 'visibility_off' }}</mat-icon>
+            </button>
+            <mat-error>{{ getErrorMessage('password') }}</mat-error>
+            <mat-hint>Password must be at least 8 characters long</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Confirm Password</mat-label>
+            <input matInput 
+                   [type]="hideConfirmPassword ? 'password' : 'text'"
+                   formControlName="confirmPassword" 
+                   placeholder="Confirm your password"
+                   autocomplete="new-password">
+            <button mat-icon-button 
+                    matSuffix 
+                    type="button"
+                    (click)="hideConfirmPassword = !hideConfirmPassword">
+              <mat-icon>{{ hideConfirmPassword ? 'visibility' : 'visibility_off' }}</mat-icon>
+            </button>
+            <mat-error>{{ getErrorMessage('confirmPassword') }}</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Organization Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">Organization Information</h3>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Organization ID</mat-label>
+            <input matInput 
+                   formControlName="tenantId" 
+                   placeholder="Enter your organization identifier">
+            <mat-icon matSuffix>business</mat-icon>
+            <mat-error>{{ getErrorMessage('tenantId') }}</mat-error>
+            <mat-hint>This is provided by your organization administrator</mat-hint>
+          </mat-form-field>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Department (Optional)</mat-label>
+              <mat-select formControlName="department">
+                <mat-option value="">Select Department</mat-option>
+                <mat-option *ngFor="let dept of departments" [value]="dept">
+                  {{ dept }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matSuffix>domain</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Job Title (Optional)</mat-label>
+              <input matInput 
+                     formControlName="jobTitle" 
+                     placeholder="Enter your job title">
+              <mat-icon matSuffix>work</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Preferences Section -->
+        <div class="form-section">
+          <h3 class="section-title">Preferences</h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Time Zone</mat-label>
+              <mat-select formControlName="timeZone">
+                <mat-option *ngFor="let tz of timeZones" [value]="tz">
+                  {{ tz }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matSuffix>schedule</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Language</mat-label>
+              <mat-select formControlName="language">
+                <mat-option *ngFor="let lang of languages" [value]="lang.code">
+                  {{ lang.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matSuffix>language</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-actions">
+          <button mat-raised-button 
+                  color="primary" 
+                  type="submit"
+                  [disabled]="isLoading"
+                  class="register-button">
+            <mat-spinner *ngIf="isLoading" diameter="20" class="button-spinner"></mat-spinner>
+            <span *ngIf="!isLoading">
+              <mat-icon>person_add</mat-icon>
+              Create Account
+            </span>
+            <span *ngIf="isLoading">Creating Account...</span>
+          </button>
+        </div>
+
+        <!-- Login Link -->
+        <div class="login-link">
+          <p>Already have an account? 
+            <a routerLink="/auth/login" class="link">Sign in here</a>
+          </p>
+        </div>
+
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>
