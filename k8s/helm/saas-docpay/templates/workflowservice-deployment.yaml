@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "saas-docpay.fullname" . }}-workflowservice
+  labels:
+    {{- include "saas-docpay.labels" . | nindent 4 }}
+    app.kubernetes.io/component: workflowservice
+spec:
+  {{- if not .Values.services.workflowService.autoscaling.enabled }}
+  replicas: {{ .Values.services.workflowService.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "saas-docpay.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: workflowservice
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "saas-docpay.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: workflowservice
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "saas-docpay.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: workflowservice
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.services.workflowService.image.repository }}:{{ .Values.services.workflowService.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.services.workflowService.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.services.workflowService.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: {{ .Values.environment }}
+            - name: ASPNETCORE_URLS
+              value: "http://+:{{ .Values.services.workflowService.port }}"
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-secrets
+                  key: database-connection-string
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-secrets
+                  key: jwt-key
+            - name: Jwt__Issuer
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-config
+                  key: jwt-issuer
+            - name: Jwt__Audience
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-config
+                  key: jwt-audience
+            - name: ServiceBus__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-secrets
+                  key: servicebus-connection-string
+          resources:
+            {{- toYaml .Values.services.workflowService.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "saas-docpay.fullname" . }}-workflowservice
+  labels:
+    {{- include "saas-docpay.labels" . | nindent 4 }}
+    app.kubernetes.io/component: workflowservice
+spec:
+  type: {{ .Values.services.workflowService.type }}
+  ports:
+    - port: {{ .Values.services.workflowService.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "saas-docpay.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: workflowservice

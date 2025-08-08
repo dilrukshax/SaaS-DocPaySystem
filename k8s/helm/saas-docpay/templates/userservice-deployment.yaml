@@ -1,0 +1,114 @@
+{{- if .Values.services.userservice.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "saas-docpay.fullname" . }}-userservice
+  labels:
+    {{- include "saas-docpay.labels" . | nindent 4 }}
+    app.kubernetes.io/component: userservice
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.services.userservice.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "saas-docpay.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: userservice
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "saas-docpay.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: userservice
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "saas-docpay.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: userservice
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.registry }}/userservice:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.services.userservice.targetPort }}
+              protocol: TCP
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: {{ .Values.env.ASPNETCORE_ENVIRONMENT | quote }}
+            - name: Jwt__Issuer
+              value: {{ .Values.env.JWT_ISSUER | quote }}
+            - name: Jwt__Audience
+              value: {{ .Values.env.JWT_AUDIENCE | quote }}
+            - name: Jwt__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-jwt-secret
+                  key: secretKey
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-database-secret
+                  key: connectionString
+            - name: ConnectionStrings__ServiceBus
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-servicebus-secret
+                  key: connectionString
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "saas-docpay.fullname" . }}-userservice
+  labels:
+    {{- include "saas-docpay.labels" . | nindent 4 }}
+    app.kubernetes.io/component: userservice
+spec:
+  type: {{ .Values.services.userservice.type }}
+  ports:
+    - port: {{ .Values.services.userservice.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "saas-docpay.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: userservice
+{{- end }}

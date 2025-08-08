@@ -1,0 +1,123 @@
+name: Monitoring & Health Checks
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # Every 5 minutes
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [staging, production]
+        
+    steps:
+    - name: Set environment URL
+      run: |
+        if [ "${{ matrix.environment }}" == "production" ]; then
+          echo "BASE_URL=https://api.docpaysystem.com" >> $GITHUB_ENV
+        else
+          echo "BASE_URL=https://staging-api.docpaysystem.com" >> $GITHUB_ENV
+        fi
+    
+    - name: Health Check - API Gateway
+      run: |
+        response=$(curl -s -o /dev/null -w "%{http_code}" $BASE_URL/health)
+        if [ $response -ne 200 ]; then
+          echo "❌ API Gateway health check failed with status $response"
+          exit 1
+        else
+          echo "✅ API Gateway is healthy"
+        fi
+    
+    - name: Health Check - User Service
+      run: |
+        response=$(curl -s -o /dev/null -w "%{http_code}" $BASE_URL/api/users/health)
+        if [ $response -ne 200 ]; then
+          echo "❌ User Service health check failed with status $response"
+          exit 1
+        else
+          echo "✅ User Service is healthy"
+        fi
+    
+    - name: Health Check - Payment Service
+      run: |
+        response=$(curl -s -o /dev/null -w "%{http_code}" $BASE_URL/api/payments/health)
+        if [ $response -ne 200 ]; then
+          echo "❌ Payment Service health check failed with status $response"
+          exit 1
+        else
+          echo "✅ Payment Service is healthy"
+        fi
+    
+    - name: Health Check - Notification Service
+      run: |
+        response=$(curl -s -o /dev/null -w "%{http_code}" $BASE_URL/api/notifications/health)
+        if [ $response -ne 200 ]; then
+          echo "❌ Notification Service health check failed with status $response"
+          exit 1
+        else
+          echo "✅ Notification Service is healthy"
+        fi
+    
+    - name: Health Check - Workflow Service
+      run: |
+        response=$(curl -s -o /dev/null -w "%{http_code}" $BASE_URL/api/workflows/health)
+        if [ $response -ne 200 ]; then
+          echo "❌ Workflow Service health check failed with status $response"
+          exit 1
+        else
+          echo "✅ Workflow Service is healthy"
+        fi
+    
+    - name: Send notification on failure
+      if: failure()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        channel: '#alerts'
+        text: '🚨 Health check failed for ${{ matrix.environment }} environment'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  performance-monitoring:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install k6
+      run: |
+        sudo gpg -k
+        sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+    
+    - name: Run lightweight performance test
+      run: |
+        k6 run --out json=monitoring-results.json tests/monitoring/light-load.js
+      env:
+        BASE_URL: https://api.docpaysystem.com
+    
+    - name: Analyze results
+      run: |
+        # Parse results and check for performance degradation
+        node tests/monitoring/analyze-results.js monitoring-results.json
+    
+    - name: Send performance alert
+      if: failure()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        channel: '#performance'
+        text: '📉 Performance degradation detected in production'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

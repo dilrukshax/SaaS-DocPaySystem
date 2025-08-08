@@ -1,0 +1,70 @@
+name: Database Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      migration_command:
+        description: 'Migration command'
+        required: true
+        default: 'update'
+        type: choice
+        options:
+          - update
+          - rollback
+          - script
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Install EF Core tools
+      run: dotnet tool install --global dotnet-ef
+    
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Set connection string
+      run: |
+        if [ "${{ github.event.inputs.environment }}" == "production" ]; then
+          echo "CONNECTION_STRING=${{ secrets.PRODUCTION_DB_CONNECTION }}" >> $GITHUB_ENV
+        else
+          echo "CONNECTION_STRING=${{ secrets.STAGING_DB_CONNECTION }}" >> $GITHUB_ENV
+        fi
+    
+    - name: Run database migration
+      run: |
+        case "${{ github.event.inputs.migration_command }}" in
+          "update")
+            dotnet ef database update --project src/UserService --connection "$CONNECTION_STRING"
+            ;;
+          "rollback")
+            dotnet ef database update 0 --project src/UserService --connection "$CONNECTION_STRING"
+            ;;
+          "script")
+            dotnet ef migrations script --project src/UserService --connection "$CONNECTION_STRING"
+            ;;
+        esac
+    
+    - name: Verify migration
+      run: |
+        # Add verification queries here
+        echo "Migration completed for ${{ github.event.inputs.environment }}"

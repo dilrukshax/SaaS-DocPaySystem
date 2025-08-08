@@ -1,0 +1,40 @@
+# PaymentService Dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy project files
+COPY ["shared/Shared.Kernel/Shared.Kernel.csproj", "shared/Shared.Kernel/"]
+COPY ["services/PaymentService/PaymentService.Domain/PaymentService.Domain.csproj", "services/PaymentService/PaymentService.Domain/"]
+COPY ["services/PaymentService/PaymentService.Infrastructure/PaymentService.Infrastructure.csproj", "services/PaymentService/PaymentService.Infrastructure/"]
+COPY ["services/PaymentService/PaymentService.API/PaymentService.API.csproj", "services/PaymentService/PaymentService.API/"]
+
+# Restore dependencies
+RUN dotnet restore "services/PaymentService/PaymentService.API/PaymentService.API.csproj"
+
+# Copy source code
+COPY ["shared/Shared.Kernel/", "shared/Shared.Kernel/"]
+COPY ["services/PaymentService/", "services/PaymentService/"]
+
+WORKDIR "/src/services/PaymentService/PaymentService.API"
+RUN dotnet build "PaymentService.API.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "PaymentService.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+
+# Set environment variables
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_URLS=https://+:443;http://+:80
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl --fail https://localhost/health || exit 1
+
+ENTRYPOINT ["dotnet", "PaymentService.API.dll"]

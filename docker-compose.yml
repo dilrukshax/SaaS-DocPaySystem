@@ -1,35 +1,48 @@
 version: '3.8'
 
 services:
-  # SQL Server Database
+  # Infrastructure Services
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: saas-sqlserver
     environment:
-      SA_PASSWORD: YourStrong@Password123
-      ACCEPT_EULA: Y
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=DocPay123!@#
+      - MSSQL_PID=Express
     ports:
       - "1433:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
     networks:
       - saas-network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P DocPay123!@# -Q 'SELECT 1'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Redis Cache
   redis:
-    image: redis:7-alpine
+    image: redis:7.2-alpine
+    container_name: saas-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
       - saas-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # RabbitMQ Message Broker
+  # Message Queue (using RabbitMQ as Azure Service Bus alternative for local dev)
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3.12-management-alpine
+    container_name: saas-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin123
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=DocPay123!
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -37,220 +50,180 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - saas-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # API Gateway
+  apigateway:
+    build:
+      context: .
+      dockerfile: gateway/ApiGateway/Dockerfile
+    container_name: saas-apigateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=DocPay123!
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ConnectionStrings__Redis=redis:6379
+      - Jwt__Issuer=SaaS.DocPaySystem
+      - Jwt__Audience=SaaS.DocPaySystem.API
+      - Jwt__SecretKey=your-super-secret-key-that-is-at-least-32-characters-long-for-production
+    ports:
+      - "5000:80"
+      - "5001:443"
+    volumes:
+      - ~/.aspnet/https:/https:ro
+      - ./logs/apigateway:/app/logs
+    depends_on:
+      - redis
+      - userservice
+      - paymentservice
+      - notificationservice
+      - workflowservice
+    networks:
+      - saas-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # User Service
-  user-service:
+  userservice:
     build:
-      context: ./user-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/UserService/Dockerfile
+    container_name: saas-userservice
     environment:
-      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=UserServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
-      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
-      JWT_ISSUER: "SaaS-DocPaySystem"
-      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
-      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
-      SERVICEBUS_USER_TOPIC: "user-events"
-      ASPNETCORE_ENVIRONMENT: Production
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=DocPay123!
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SaaS_DocPaySystem_User;User Id=sa;Password=DocPay123!@#;TrustServerCertificate=true;
+      - ConnectionStrings__ServiceBus=amqp://admin:DocPay123!@rabbitmq:5672
+      - Jwt__Issuer=SaaS.DocPaySystem
+      - Jwt__Audience=SaaS.DocPaySystem.API
+      - Jwt__SecretKey=your-super-secret-key-that-is-at-least-32-characters-long-for-production
     ports:
-      - "5001:80"
+      - "5101:80"
+      - "5102:443"
+    volumes:
+      - ~/.aspnet/https:/https:ro
     depends_on:
       - sqlserver
       - rabbitmq
     networks:
       - saas-network
-    restart: unless-stopped
-
-  # Document Service
-  document-service:
-    build:
-      context: ./document-service
-      dockerfile: Dockerfile
-    environment:
-      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=DocumentServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
-      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
-      JWT_ISSUER: "SaaS-DocPaySystem"
-      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
-      AZURE_STORAGE_CONNECTION_STRING: "${AZURE_STORAGE_CONNECTION_STRING}"
-      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
-      AZURE_FORM_RECOGNIZER_ENDPOINT: "${AZURE_FORM_RECOGNIZER_ENDPOINT}"
-      AZURE_FORM_RECOGNIZER_API_KEY: "${AZURE_FORM_RECOGNIZER_API_KEY}"
-      SERVICEBUS_DOCUMENT_TOPIC: "document-events"
-      AZURE_STORAGE_CONTAINER_NAME: "documents"
-      ASPNETCORE_ENVIRONMENT: Production
-    ports:
-      - "5002:80"
-    depends_on:
-      - sqlserver
-      - rabbitmq
-      - user-service
-    networks:
-      - saas-network
-    restart: unless-stopped
-
-  # Invoice Service
-  invoice-service:
-    build:
-      context: ./invoice-service
-      dockerfile: Dockerfile
-    environment:
-      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=InvoiceServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
-      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
-      JWT_ISSUER: "SaaS-DocPaySystem"
-      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
-      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
-      SERVICEBUS_INVOICE_TOPIC: "invoice-events"
-      ASPNETCORE_ENVIRONMENT: Production
-    ports:
-      - "5003:80"
-    depends_on:
-      - sqlserver
-      - rabbitmq
-      - user-service
-    networks:
-      - saas-network
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Payment Service
-  payment-service:
+  paymentservice:
     build:
-      context: ./payment-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/PaymentService/Dockerfile
+    container_name: saas-paymentservice
     environment:
-      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=PaymentServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
-      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
-      JWT_ISSUER: "SaaS-DocPaySystem"
-      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
-      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
-      STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY}"
-      STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET}"
-      SERVICEBUS_PAYMENT_TOPIC: "payment-events"
-      ASPNETCORE_ENVIRONMENT: Production
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=DocPay123!
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SaaS_DocPaySystem_Payment;User Id=sa;Password=DocPay123!@#;TrustServerCertificate=true;
+      - ConnectionStrings__ServiceBus=amqp://admin:DocPay123!@rabbitmq:5672
+      - Stripe__SecretKey=${STRIPE_SECRET_KEY}
+      - Stripe__PublishableKey=${STRIPE_PUBLISHABLE_KEY}
+      - Stripe__WebhookSecret=${STRIPE_WEBHOOK_SECRET}
+      - Jwt__Issuer=SaaS.DocPaySystem
+      - Jwt__Audience=SaaS.DocPaySystem.API
+      - Jwt__SecretKey=your-super-secret-key-that-is-at-least-32-characters-long-for-production
     ports:
-      - "5004:80"
+      - "5201:80"
+      - "5202:443"
+    volumes:
+      - ~/.aspnet/https:/https:ro
     depends_on:
       - sqlserver
       - rabbitmq
-      - user-service
     networks:
       - saas-network
-    restart: unless-stopped
-
-  # Workflow Service
-  workflow-service:
-    build:
-      context: ./workflow-service
-      dockerfile: Dockerfile
-    environment:
-      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=WorkflowServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
-      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
-      JWT_ISSUER: "SaaS-DocPaySystem"
-      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
-      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
-      SERVICEBUS_WORKFLOW_TOPIC: "workflow-events"
-      ASPNETCORE_ENVIRONMENT: Production
-    ports:
-      - "5005:80"
-    depends_on:
-      - sqlserver
-      - rabbitmq
-      - user-service
-    networks:
-      - saas-network
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Notification Service
-  notification-service:
+  notificationservice:
     build:
-      context: ./notification-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/NotificationService/Dockerfile
+    container_name: saas-notificationservice
     environment:
-      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=NotificationServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
-      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
-      JWT_ISSUER: "SaaS-DocPaySystem"
-      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
-      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
-      SENDGRID_API_KEY: "${SENDGRID_API_KEY}"
-      SENDGRID_FROM_EMAIL: "${SENDGRID_FROM_EMAIL}"
-      SENDGRID_FROM_NAME: "${SENDGRID_FROM_NAME}"
-      SERVICEBUS_NOTIFICATION_TOPIC: "notification-events"
-      ASPNETCORE_ENVIRONMENT: Production
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=DocPay123!
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SaaS_DocPaySystem_Notification;User Id=sa;Password=DocPay123!@#;TrustServerCertificate=true;
+      - ConnectionStrings__ServiceBus=amqp://admin:DocPay123!@rabbitmq:5672
+      - SendGrid__ApiKey=${SENDGRID_API_KEY}
+      - SendGrid__FromEmail=noreply@docpaysystem.com
+      - SendGrid__FromName=DocPay System
+      - Jwt__Issuer=SaaS.DocPaySystem
+      - Jwt__Audience=SaaS.DocPaySystem.API
+      - Jwt__SecretKey=your-super-secret-key-that-is-at-least-32-characters-long-for-production
     ports:
-      - "5006:80"
-    depends_on:
-      - sqlserver
-      - rabbitmq
-      - user-service
-    networks:
-      - saas-network
-    restart: unless-stopped
-
-  # Reporting Service
-  reporting-service:
-    build:
-      context: ./reporting-service
-      dockerfile: Dockerfile
-    environment:
-      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=ReportingServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
-      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
-      JWT_ISSUER: "SaaS-DocPaySystem"
-      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
-      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
-      ASPNETCORE_ENVIRONMENT: Production
-    ports:
-      - "5007:80"
-    depends_on:
-      - sqlserver
-      - rabbitmq
-      - user-service
-    networks:
-      - saas-network
-    restart: unless-stopped
-
-  # AI Service
-  ai-service:
-    build:
-      context: ./ai-service
-      dockerfile: Dockerfile
-    environment:
-      DATABASE_CONNECTION_STRING: "Server=sqlserver;Database=AIServiceDB;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=true;"
-      JWT_SECRET: "YourSuperSecretJWTKeyThatShouldBeLongEnough123!"
-      JWT_ISSUER: "SaaS-DocPaySystem"
-      JWT_AUDIENCE: "SaaS-DocPaySystem-Users"
-      AZURE_SERVICEBUS_CONNECTION_STRING: "${AZURE_SERVICEBUS_CONNECTION_STRING}"
-      AZURE_OPENAI_ENDPOINT: "${AZURE_OPENAI_ENDPOINT}"
-      AZURE_OPENAI_API_KEY: "${AZURE_OPENAI_API_KEY}"
-      ASPNETCORE_ENVIRONMENT: Production
-    ports:
-      - "5008:80"
-    depends_on:
-      - sqlserver
-      - rabbitmq
-      - user-service
-    networks:
-      - saas-network
-    restart: unless-stopped
-
-  # NGINX API Gateway
-  api-gateway:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
+      - "5301:80"
+      - "5302:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
+      - ~/.aspnet/https:/https:ro
     depends_on:
-      - user-service
-      - document-service
-      - invoice-service
-      - payment-service
-      - workflow-service
-      - notification-service
-      - reporting-service
-      - ai-service
+      - sqlserver
+      - rabbitmq
     networks:
       - saas-network
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Workflow Service
+  workflowservice:
+    build:
+      context: .
+      dockerfile: services/WorkflowService/Dockerfile
+    container_name: saas-workflowservice
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=DocPay123!
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SaaS_DocPaySystem_Workflow;User Id=sa;Password=DocPay123!@#;TrustServerCertificate=true;
+      - ConnectionStrings__ServiceBus=amqp://admin:DocPay123!@rabbitmq:5672
+      - Jwt__Issuer=SaaS.DocPaySystem
+      - Jwt__Audience=SaaS.DocPaySystem.API
+      - Jwt__SecretKey=your-super-secret-key-that-is-at-least-32-characters-long-for-production
+    ports:
+      - "5401:80"
+      - "5402:443"
+    volumes:
+      - ~/.aspnet/https:/https:ro
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    networks:
+      - saas-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   sqlserver_data:

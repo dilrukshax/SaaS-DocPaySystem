@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "saas-docpay.fullname" . }}-notificationservice
+  labels:
+    {{- include "saas-docpay.labels" . | nindent 4 }}
+    app.kubernetes.io/component: notificationservice
+spec:
+  {{- if not .Values.services.notificationService.autoscaling.enabled }}
+  replicas: {{ .Values.services.notificationService.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "saas-docpay.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: notificationservice
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "saas-docpay.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: notificationservice
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "saas-docpay.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: notificationservice
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.services.notificationService.image.repository }}:{{ .Values.services.notificationService.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.services.notificationService.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.services.notificationService.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: {{ .Values.environment }}
+            - name: ASPNETCORE_URLS
+              value: "http://+:{{ .Values.services.notificationService.port }}"
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-secrets
+                  key: database-connection-string
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-secrets
+                  key: jwt-key
+            - name: Jwt__Issuer
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-config
+                  key: jwt-issuer
+            - name: Jwt__Audience
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-config
+                  key: jwt-audience
+            - name: SendGrid__ApiKey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-secrets
+                  key: sendgrid-api-key
+            - name: ServiceBus__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "saas-docpay.fullname" . }}-secrets
+                  key: servicebus-connection-string
+          resources:
+            {{- toYaml .Values.services.notificationService.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "saas-docpay.fullname" . }}-notificationservice
+  labels:
+    {{- include "saas-docpay.labels" . | nindent 4 }}
+    app.kubernetes.io/component: notificationservice
+spec:
+  type: {{ .Values.services.notificationService.type }}
+  ports:
+    - port: {{ .Values.services.notificationService.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "saas-docpay.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: notificationservice

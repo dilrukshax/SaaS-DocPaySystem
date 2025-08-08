@@ -1,0 +1,243 @@
+# Default values for saas-docpay
+replicaCount: 1
+
+image:
+  registry: youracr.azurecr.io
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 2000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Service configurations
+services:
+  apigateway:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: saas-docpay/apigateway
+      pullPolicy: IfNotPresent
+      tag: ""
+    port: 80
+    type: LoadBalancer
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+    
+  userService:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: saas-docpay/userservice
+      pullPolicy: IfNotPresent
+      tag: ""
+    port: 5001
+    type: ClusterIP
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+    
+  paymentService:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: saas-docpay/paymentservice
+      pullPolicy: IfNotPresent
+      tag: ""
+    port: 5002
+    type: ClusterIP
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 15
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 75
+    
+  notificationService:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: saas-docpay/notificationservice
+      pullPolicy: IfNotPresent
+      tag: ""
+    port: 5003
+    type: ClusterIP
+    resources:
+      limits:
+        cpu: 300m
+        memory: 256Mi
+      requests:
+        cpu: 150m
+        memory: 128Mi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+    
+  workflowService:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: saas-docpay/workflowservice
+      pullPolicy: IfNotPresent
+      tag: ""
+    port: 5004
+    type: ClusterIP
+    resources:
+      limits:
+        cpu: 400m
+        memory: 384Mi
+      requests:
+        cpu: 200m
+        memory: 192Mi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 12
+      targetCPUUtilizationPercentage: 75
+      targetMemoryUtilizationPercentage: 80
+
+# Database configuration
+database:
+  enabled: true
+  image: mcr.microsoft.com/mssql/server:2022-latest
+  port: 1433
+  storage: 10Gi
+  storageClass: "default"
+
+# Redis configuration
+redis:
+  enabled: true
+  image: redis:7.2-alpine
+  port: 6379
+  storage: 5Gi
+
+# RabbitMQ configuration
+rabbitmq:
+  enabled: true
+  image: rabbitmq:3.12-management-alpine
+  port: 5672
+  managementPort: 15672
+  storage: 5Gi
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: api.docpaysystem.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: docpaysystem-tls
+      hosts:
+        - api.docpaysystem.com
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Environment variables
+environment: "Production"
+env:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  JWT_ISSUER: "SaaS.DocPaySystem"
+  JWT_AUDIENCE: "SaaS.DocPaySystem.API"
+
+# Secret configuration
+secrets:
+  jwt:
+    secretKey: "your-super-secret-key-that-is-at-least-32-characters-long"
+  database:
+    connectionString: "Server=sqlserver;Database=SaaS_DocPaySystem;User Id=sa;Password=DocPay123!@#;TrustServerCertificate=true;"
+  stripe:
+    secretKey: ""
+    publishableKey: ""
+    webhookSecret: ""
+  sendgrid:
+    apiKey: ""
+  servicebus:
+    connectionString: ""
+
+# Monitoring
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+  grafana:
+    enabled: true
+
+# Backup configuration
+backup:
+  enabled: true
+  schedule: "0 2 * * *"
+  retention: "7d"

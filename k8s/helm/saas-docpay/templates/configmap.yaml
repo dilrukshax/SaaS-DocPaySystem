@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "saas-docpay.fullname" . }}-config
+  labels:
+    {{- include "saas-docpay.labels" . | nindent 4 }}
+data:
+  ASPNETCORE_ENVIRONMENT: {{ .Values.env.ASPNETCORE_ENVIRONMENT | quote }}
+  JWT_ISSUER: {{ .Values.env.JWT_ISSUER | quote }}
+  JWT_AUDIENCE: {{ .Values.env.JWT_AUDIENCE | quote }}
+  REDIS_CONNECTION: "redis:6379"
+  RABBITMQ_CONNECTION: "amqp://guest:guest@rabbitmq:5672"
