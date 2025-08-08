@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Infrastructure Services
   sqlserver:
@@ -64,18 +62,14 @@ services:
     container_name: saas-apigateway
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=https://+:443;http://+:80
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=DocPay123!
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__Redis=redis:6379
       - Jwt__Issuer=SaaS.DocPaySystem
       - Jwt__Audience=SaaS.DocPaySystem.API
       - Jwt__SecretKey=your-super-secret-key-that-is-at-least-32-characters-long-for-production
     ports:
       - "5000:80"
-      - "5001:443"
     volumes:
-      - ~/.aspnet/https:/https:ro
       - ./logs/apigateway:/app/logs
     depends_on:
       - redis
@@ -99,9 +93,7 @@ services:
     container_name: saas-userservice
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=https://+:443;http://+:80
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=DocPay123!
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SaaS_DocPaySystem_User;User Id=sa;Password=DocPay123!@#;TrustServerCertificate=true;
       - ConnectionStrings__ServiceBus=amqp://admin:DocPay123!@rabbitmq:5672
       - Jwt__Issuer=SaaS.DocPaySystem
@@ -109,9 +101,6 @@ services:
       - Jwt__SecretKey=your-super-secret-key-that-is-at-least-32-characters-long-for-production
     ports:
       - "5101:80"
-      - "5102:443"
-    volumes:
-      - ~/.aspnet/https:/https:ro
     depends_on:
       - sqlserver
       - rabbitmq
@@ -131,9 +120,7 @@ services:
     container_name: saas-paymentservice
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=https://+:443;http://+:80
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=DocPay123!
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SaaS_DocPaySystem_Payment;User Id=sa;Password=DocPay123!@#;TrustServerCertificate=true;
       - ConnectionStrings__ServiceBus=amqp://admin:DocPay123!@rabbitmq:5672
       - Stripe__SecretKey=${STRIPE_SECRET_KEY}
@@ -144,9 +131,6 @@ services:
       - Jwt__SecretKey=your-super-secret-key-that-is-at-least-32-characters-long-for-production
     ports:
       - "5201:80"
-      - "5202:443"
-    volumes:
-      - ~/.aspnet/https:/https:ro
     depends_on:
       - sqlserver
       - rabbitmq
@@ -166,9 +150,7 @@ services:
     container_name: saas-notificationservice
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=https://+:443;http://+:80
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=DocPay123!
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SaaS_DocPaySystem_Notification;User Id=sa;Password=DocPay123!@#;TrustServerCertificate=true;
       - ConnectionStrings__ServiceBus=amqp://admin:DocPay123!@rabbitmq:5672
       - SendGrid__ApiKey=${SENDGRID_API_KEY}
@@ -179,9 +161,6 @@ services:
       - Jwt__SecretKey=your-super-secret-key-that-is-at-least-32-characters-long-for-production
     ports:
       - "5301:80"
-      - "5302:443"
-    volumes:
-      - ~/.aspnet/https:/https:ro
     depends_on:
       - sqlserver
       - rabbitmq
@@ -201,9 +180,7 @@ services:
     container_name: saas-workflowservice
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=https://+:443;http://+:80
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=DocPay123!
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SaaS_DocPaySystem_Workflow;User Id=sa;Password=DocPay123!@#;TrustServerCertificate=true;
       - ConnectionStrings__ServiceBus=amqp://admin:DocPay123!@rabbitmq:5672
       - Jwt__Issuer=SaaS.DocPaySystem
@@ -211,9 +188,6 @@ services:
       - Jwt__SecretKey=your-super-secret-key-that-is-at-least-32-characters-long-for-production
     ports:
       - "5401:80"
-      - "5402:443"
-    volumes:
-      - ~/.aspnet/https:/https:ro
     depends_on:
       - sqlserver
       - rabbitmq

@@ -9,8 +9,6 @@ WORKDIR /src
 
 # Copy project files
 COPY ["shared/Shared.Kernel/Shared.Kernel.csproj", "shared/Shared.Kernel/"]
-COPY ["services/PaymentService/PaymentService.Domain/PaymentService.Domain.csproj", "services/PaymentService/PaymentService.Domain/"]
-COPY ["services/PaymentService/PaymentService.Infrastructure/PaymentService.Infrastructure.csproj", "services/PaymentService/PaymentService.Infrastructure/"]
 COPY ["services/PaymentService/PaymentService.API/PaymentService.API.csproj", "services/PaymentService/PaymentService.API/"]
 
 # Restore dependencies

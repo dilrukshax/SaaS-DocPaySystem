@@ -1,343 +1,103 @@
 {
   "Routes": [
     {
-      "DownstreamPathTemplate": "/api/auth/{everything}",
-      "DownstreamScheme": "https",
+      "DownstreamPathTemplate": "/api/user/{everything}",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "userservice",
-          "Port": 5001
+          "Port": 80
         }
       ],
-      "UpstreamPathTemplate": "/api/auth/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
-      "RouteClaimsRequirement": {},
-      "RateLimitOptions": {
-        "ClientWhitelist": [],
-        "EnableRateLimiting": true,
-        "Period": "1m",
-        "PeriodTimespan": 60,
-        "Limit": 50
-      },
-      "Key": "auth"
+      "UpstreamPathTemplate": "/api/user/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
     },
     {
-      "DownstreamPathTemplate": "/api/users/{everything}",
-      "DownstreamScheme": "https",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "userservice",
-          "Port": 5001
-        }
-      ],
-      "UpstreamPathTemplate": "/api/users/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
-        "AllowedScopes": []
-      },
-      "RouteClaimsRequirement": {
-        "Role": "Admin,Manager,User"
-      },
-      "RateLimitOptions": {
-        "ClientWhitelist": [],
-        "EnableRateLimiting": true,
-        "Period": "1m",
-        "PeriodTimespan": 60,
-        "Limit": 100
-      },
-      "Key": "users"
-    },
-    {
-      "DownstreamPathTemplate": "/api/documents/{everything}",
-      "DownstreamScheme": "https",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "documentservice",
-          "Port": 5005
-        }
-      ],
-      "UpstreamPathTemplate": "/api/documents/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
-        "AllowedScopes": []
-      },
-      "RouteClaimsRequirement": {
-        "Role": "Admin,Manager,User"
-      },
-      "RateLimitOptions": {
-        "ClientWhitelist": [],
-        "EnableRateLimiting": true,
-        "Period": "1m",
-        "PeriodTimespan": 60,
-        "Limit": 200
-      },
-      "Key": "documents"
-    },
-    {
-      "DownstreamPathTemplate": "/api/invoices/{everything}",
-      "DownstreamScheme": "https",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "invoiceservice",
-          "Port": 5006
-        }
-      ],
-      "UpstreamPathTemplate": "/api/invoices/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
-        "AllowedScopes": []
-      },
-      "RouteClaimsRequirement": {
-        "Role": "Admin,Manager,User"
-      },
-      "RateLimitOptions": {
-        "ClientWhitelist": [],
-        "EnableRateLimiting": true,
-        "Period": "1m",
-        "PeriodTimespan": 60,
-        "Limit": 150
-      },
-      "Key": "invoices"
-    },
-    {
-      "DownstreamPathTemplate": "/api/payments/{everything}",
-      "DownstreamScheme": "https",
+      "DownstreamPathTemplate": "/api/payment/{everything}",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "paymentservice",
-          "Port": 5002
+          "Port": 80
         }
       ],
-      "UpstreamPathTemplate": "/api/payments/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
-        "AllowedScopes": []
-      },
-      "RouteClaimsRequirement": {
-        "Role": "Admin,Manager,User"
-      },
-      "RateLimitOptions": {
-        "ClientWhitelist": [],
-        "EnableRateLimiting": true,
-        "Period": "1m",
-        "PeriodTimespan": 60,
-        "Limit": 100
-      },
-      "Key": "payments"
+      "UpstreamPathTemplate": "/api/payment/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
     },
     {
-      "DownstreamPathTemplate": "/api/notifications/{everything}",
-      "DownstreamScheme": "https",
+      "DownstreamPathTemplate": "/api/notification/{everything}",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "notificationservice",
-          "Port": 5003
+          "Port": 80
         }
       ],
-      "UpstreamPathTemplate": "/api/notifications/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
-        "AllowedScopes": []
-      },
-      "RouteClaimsRequirement": {
-        "Role": "Admin,Manager,User"
-      },
-      "RateLimitOptions": {
-        "ClientWhitelist": [],
-        "EnableRateLimiting": true,
-        "Period": "1m",
-        "PeriodTimespan": 60,
-        "Limit": 200
-      },
-      "Key": "notifications"
+      "UpstreamPathTemplate": "/api/notification/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
     },
     {
-      "DownstreamPathTemplate": "/api/workflows/{everything}",
-      "DownstreamScheme": "https",
+      "DownstreamPathTemplate": "/api/workflow/{everything}",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "workflowservice",
-          "Port": 5004
+          "Port": 80
         }
       ],
-      "UpstreamPathTemplate": "/api/workflows/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
-        "AllowedScopes": []
-      },
-      "RouteClaimsRequirement": {
-        "Role": "Admin,Manager"
-      },
-      "RateLimitOptions": {
-        "ClientWhitelist": [],
-        "EnableRateLimiting": true,
-        "Period": "1m",
-        "PeriodTimespan": 60,
-        "Limit": 100
-      },
-      "Key": "workflows"
-    },
-    {
-      "DownstreamPathTemplate": "/api/workflowinstances/{everything}",
-      "DownstreamScheme": "https",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "workflowservice",
-          "Port": 5004
-        }
-      ],
-      "UpstreamPathTemplate": "/api/workflowinstances/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
-        "AllowedScopes": []
-      },
-      "RouteClaimsRequirement": {
-        "Role": "Admin,Manager,User"
-      },
-      "RateLimitOptions": {
-        "ClientWhitelist": [],
-        "EnableRateLimiting": true,
-        "Period": "1m",
-        "PeriodTimespan": 60,
-        "Limit": 150
-      },
-      "Key": "workflowinstances"
+      "UpstreamPathTemplate": "/api/workflow/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
     },
     {
       "DownstreamPathTemplate": "/health",
-      "DownstreamScheme": "https",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "userservice",
-          "Port": 5001
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/health/users",
-      "UpstreamHttpMethod": [ "GET" ],
-      "Key": "health-users"
+      "UpstreamHttpMethod": [ "GET" ]
     },
     {
       "DownstreamPathTemplate": "/health",
-      "DownstreamScheme": "https",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "paymentservice",
-          "Port": 5002
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/health/payments",
-      "UpstreamHttpMethod": [ "GET" ],
-      "Key": "health-payments"
+      "UpstreamHttpMethod": [ "GET" ]
     },
     {
       "DownstreamPathTemplate": "/health",
-      "DownstreamScheme": "https",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "notificationservice",
-          "Port": 5003
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/health/notifications",
-      "UpstreamHttpMethod": [ "GET" ],
-      "Key": "health-notifications"
+      "UpstreamHttpMethod": [ "GET" ]
     },
     {
       "DownstreamPathTemplate": "/health",
-      "DownstreamScheme": "https",
+      "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "workflowservice",
-          "Port": 5004
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/health/workflows",
-      "UpstreamHttpMethod": [ "GET" ],
-      "Key": "health-workflows"
-    },
-    {
-      "DownstreamPathTemplate": "/health",
-      "DownstreamScheme": "https",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "documentservice",
-          "Port": 5005
-        }
-      ],
-      "UpstreamPathTemplate": "/health/documents",
-      "UpstreamHttpMethod": [ "GET" ],
-      "Key": "health-documents"
-    },
-    {
-      "DownstreamPathTemplate": "/health",
-      "DownstreamScheme": "https",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "invoiceservice",
-          "Port": 5006
-        }
-      ],
-      "UpstreamPathTemplate": "/health/invoices",
-      "UpstreamHttpMethod": [ "GET" ],
-      "Key": "health-invoices"
-    }
-  ],
-  "Aggregates": [
-    {
-      "RouteKeys": [
-        "invoices",
-        "payments"
-      ],
-      "UpstreamPathTemplate": "/api/dashboard/financial-summary",
-      "UpstreamHttpMethod": [ "GET" ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
-        "AllowedScopes": []
-      },
-      "RouteClaimsRequirement": {
-        "Role": "Admin,Manager"
-      }
-    },
-    {
-      "RouteKeys": [
-        "documents",
-        "invoices",
-        "workflows"
-      ],
-      "UpstreamPathTemplate": "/api/dashboard/operational-summary",
-      "UpstreamHttpMethod": [ "GET" ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
-        "AllowedScopes": []
-      },
-      "RouteClaimsRequirement": {
-        "Role": "Admin,Manager,User"
-      }
+      "UpstreamHttpMethod": [ "GET" ]
     }
   ],
   "GlobalConfiguration": {
-    "BaseUrl": "https://localhost:5000",
-    "RateLimitOptions": {
-      "QuotaExceededMessage": "Rate limit exceeded. Please try again later.",
-      "HttpStatusCode": 429,
-      "ClientIdHeader": "ClientId"
-    },
-    "QoSOptions": {
-      "ExceptionsAllowedBeforeBreaking": 3,
-      "DurationOfBreak": 5000,
-      "TimeoutValue": 5000
-    },
-    "LoadBalancerOptions": {
-      "Type": "RoundRobin",
-      "Key": "ClientId",
-      "Expiry": 1800000
-    }
+    "BaseUrl": "http://localhost:5000"
   }
 }

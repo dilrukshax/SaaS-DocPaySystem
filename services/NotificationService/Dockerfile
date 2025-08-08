@@ -9,8 +9,6 @@ WORKDIR /src
 
 # Copy project files
 COPY ["shared/Shared.Kernel/Shared.Kernel.csproj", "shared/Shared.Kernel/"]
-COPY ["services/NotificationService/NotificationService.Domain/NotificationService.Domain.csproj", "services/NotificationService/NotificationService.Domain/"]
-COPY ["services/NotificationService/NotificationService.Infrastructure/NotificationService.Infrastructure.csproj", "services/NotificationService/NotificationService.Infrastructure/"]
 COPY ["services/NotificationService/NotificationService.API/NotificationService.API.csproj", "services/NotificationService/NotificationService.API/"]
 
 # Restore dependencies

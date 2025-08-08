@@ -9,8 +9,6 @@ WORKDIR /src
 
 # Copy project files
 COPY ["shared/Shared.Kernel/Shared.Kernel.csproj", "shared/Shared.Kernel/"]
-COPY ["services/WorkflowService/WorkflowService.Domain/WorkflowService.Domain.csproj", "services/WorkflowService/WorkflowService.Domain/"]
-COPY ["services/WorkflowService/WorkflowService.Infrastructure/WorkflowService.Infrastructure.csproj", "services/WorkflowService/WorkflowService.Infrastructure/"]
 COPY ["services/WorkflowService/WorkflowService.API/WorkflowService.API.csproj", "services/WorkflowService/WorkflowService.API/"]
 
 # Restore dependencies

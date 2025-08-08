@@ -1,0 +1,99 @@
+# SaaS DocPay System API Tests
+# Use this file with REST Client extension in VS Code or copy to Postman
+
+### Variables
+@baseUrl = http://localhost:5000
+@userServiceUrl = http://localhost:5101
+@paymentServiceUrl = http://localhost:5201
+
+### 1. Health Check Tests
+GET {{baseUrl}}/health
+Accept: application/json
+
+###
+GET {{baseUrl}}/health/users
+
+###
+GET {{baseUrl}}/health/payments
+
+###
+GET {{baseUrl}}/health/notifications
+
+###
+GET {{baseUrl}}/health/workflows
+
+### 2. Direct Service Access (Bypass Gateway)
+GET {{userServiceUrl}}/health
+Accept: text/plain
+
+###
+GET {{paymentServiceUrl}}/health
+
+### 3. API Gateway Routing Tests (Expect 401 without JWT)
+GET {{baseUrl}}/api/user
+Accept: application/json
+
+###
+GET {{baseUrl}}/api/payment
+Accept: application/json
+
+###
+GET {{baseUrl}}/api/notification
+Accept: application/json
+
+###
+GET {{baseUrl}}/api/workflow
+Accept: application/json
+
+### 4. User Authentication Test (Registration)
+POST {{baseUrl}}/api/user/register
+Content-Type: application/json
+
+{
+  "email": "test@docpay.com",
+  "password": "Test123!@#",
+  "firstName": "John",
+  "lastName": "Doe",
+  "companyName": "Test Company"
+}
+
+### 5. User Authentication Test (Login)
+POST {{baseUrl}}/api/user/login
+Content-Type: application/json
+
+{
+  "email": "test@docpay.com",
+  "password": "Test123!@#"
+}
+
+### 6. Authenticated Request (Use JWT token from login response)
+GET {{baseUrl}}/api/user/profile
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Accept: application/json
+
+### 7. Payment Endpoints Test
+POST {{baseUrl}}/api/payment/create-intent
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "amount": 1000,
+  "currency": "usd",
+  "description": "Test payment"
+}
+
+### 8. Workflow Endpoints Test
+GET {{baseUrl}}/api/workflow
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Accept: application/json
+
+### 9. Notification Endpoints Test
+POST {{baseUrl}}/api/notification/send
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "to": "test@example.com",
+  "subject": "Test Notification",
+  "message": "This is a test notification"
+}
